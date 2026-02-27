@@ -234,7 +234,7 @@ def ensemble_stats(sim_fn, params, T=10.0, dt=0.01, n_runs=200, seed=0):
     return t_ref, stacked.mean(axis=0), stacked.std(axis=0)
 
 
-def ode_mech1_baseline(z, t, params):
+def ode_baseline(z, t, params):
     """
     Mechanism I baseline (4D ODE): [rA, rB, pA, pB].
     """
@@ -425,11 +425,10 @@ def plot_premrna_ratio(t, mean, gene="B"):
     ratio = U / (S + 1e-12)
 
     fig = plt.figure(figsize=(8, 4))
-    plt.plot(t, ratio, label=rf"$U_{gene}/S_{gene}$")
+    plt.plot(t, ratio)
     plt.xlabel("Time (s)")
-    plt.ylabel("Ratio")
+    plt.ylabel(rf"$U_{gene}/S_{gene}$")
     plt.title(f"Mechanism II: pre-mRNA accumulation ratio for Gene {gene}")
-    plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     return fig
@@ -551,15 +550,16 @@ def run_all():
 
     patient_alpha = [0, 2, 3, 2, 3]
     patient_beta = [0, 1, 1, 0, 1]
+    
 
     for name, obs in [("Patient Alpha", patient_alpha), ("Patient Beta", patient_beta)]:
         path, prob, delta, psi = model.run(obs)
-        d_str, p_str = model.format_tables(delta, psi, last_k=4, transpose=True, precision=8)
+        d_str, p_str = model.format_tables(delta, psi, last_k=5, transpose=True, precision=8)
         print(f"\n{name}")
-        print("path:", path[-4:].tolist())
+        print("path:", path[1:].tolist())
         print("path_prob:", prob)
         print(d_str)
-        print(p_str) 
+        print(p_str)
 
     sde_params = dict(
         aA=1.0, aB=0.25,
@@ -595,14 +595,14 @@ def run_all():
     z0 = [0.8, 0.8, 0.8, 0.8]
     t_ode = np.linspace(0.0, 20.0, 400)
 
-    baseline = odeint(ode_mech1_baseline, z0, t_ode, args=(ode_params,))
-    plot_time_series_4d(t_ode, baseline, "Mechanism I baseline: time series")
+    baseline = odeint(ode_baseline, z0, t_ode, args=(ode_params,))
+    plot_time_series_4d(t_ode, baseline, "Baseline: time series")
 
     mech1 = odeint(ode_mech1_disabled_repression, z0, t_ode, args=(ode_params,))
-    plot_time_series_4d(t_ode, mech1, "Mechanism I disabled repression: time series")
+    plot_time_series_4d(t_ode, mech1, "Mechanism I: time series")
 
-    plot_phase_portrait_mech1(ode_mech1_baseline, z0, ode_params, "Mechanism I baseline: protein phase portrait")
-    plot_phase_portrait_mech1(ode_mech1_disabled_repression, z0, ode_params, "Mechanism I disabled repression: protein phase portrait")
+    plot_phase_portrait_mech1(ode_baseline, z0, ode_params, "Baseline: protein phase portrait")
+    plot_phase_portrait_mech1(ode_mech1_disabled_repression, z0, ode_params, "Mechanism I: protein phase portrait")
 
     x0 = [0.8, 0.8, 0.8, 0.8, 0.8, 0.8]
     plot_phase_portrait_mech2(ode_mech2_drift, x0, sde_params, "Mechanism II drift: protein phase portrait")
