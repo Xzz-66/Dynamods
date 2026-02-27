@@ -107,7 +107,7 @@ class Viterbi:
             p = p.T
 
         state_labels = self.state_names if self.state_names is not None else [f"s{i}" for i in range(d.shape[0])]
-        time_labels = [f"t{i}" for i in range(d.shape[1])]
+        time_labels = [f"t{i+1}" for i in range(d.shape[1])]
 
         d_fmt = np.vectorize(lambda x: f"{x:.{precision}g}")(d)
         p_fmt = p.astype(str)
@@ -556,10 +556,10 @@ def run_all():
         path, prob, delta, psi = model.run(obs)
         d_str, p_str = model.format_tables(delta, psi, last_k=4, transpose=True, precision=8)
         print(f"\n{name}")
-        print("path:", path.tolist())
+        print("path:", path[-4:].tolist())
         print("path_prob:", prob)
         print(d_str)
-        print(p_str)
+        print(p_str) 
 
     sde_params = dict(
         aA=1.0, aB=0.25,
