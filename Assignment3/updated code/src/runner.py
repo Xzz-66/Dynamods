@@ -3,9 +3,9 @@ from pathlib import Path
 
 import numpy as np
 
-from .config import Config, OPC, OLIGO, MICRO
+from .config import Config, MEDIUM, OPC, OLIGO, MICRO, OPC_MUT
 from .state import count_cells_by_type
-from .init import init_lesion_centered, compute_volumes
+from .init import init_lesion_centered, compute_volumes, sigma_to_display_grid
 from .cpm import cpm_sweep, make_J
 from .pde import build_mesh, init_fields, solve_pdes, get_fields
 from .grn import grn_update_opcs, opc_differentiate_by_grn
@@ -14,7 +14,10 @@ from .metrics import (
     update_microglia_activation_from_myelin,
     microglia_activation_percent,
     lesion_metrics,
-    mutant_fraction,
+    count_cells_in_region,
+    count_mutant_opcs,
+    mutant_fraction_opc,
+    outside_lesion_metrics,
 )
 from .io_utils import save_json, save_timeseries_csv, save_snapshots_npz, ensure_dir
 
@@ -121,7 +124,7 @@ def run_single(condition_name: str, sI_value: float, seed: int, out_dir: str, cf
     J = make_J()
 
     records = []
-    snapshots = {"times": [], "I": [], "G": [], "M": [], "sigma": []}
+    snapshots = {"times": [], "I": [], "G": [], "M": [], "sigma": [], "tg": []}
 
     tracked_opc = next((cid for cid, c in cells.items() if c.ctype == OPC), None)
 
@@ -143,6 +146,12 @@ def run_single(condition_name: str, sI_value: float, seed: int, out_dir: str, cf
         tmin = step * cfg.dt_macro_min
         n_opc, n_ol, n_mg = count_cells_by_type(cells, OPC, OLIGO, MICRO)
         lm = lesion_metrics(M, I_arr, G_arr, lesion)
+        n_mut_opc = count_mutant_opcs(cells, opc_type=OPC)
+        n_opc_in_lesion = count_cells_in_region(sigma, cells, lesion, OPC)
+        n_oligo_in_lesion = count_cells_in_region(sigma, cells, lesion, OLIGO)
+        n_micro_in_lesion = count_cells_in_region(sigma, cells, lesion, MICRO)
+
+        om = outside_lesion_metrics(M, I_arr, G_arr, lesion)    
 
         rec = {
             "time_min": tmin,
@@ -153,8 +162,16 @@ def run_single(condition_name: str, sI_value: float, seed: int, out_dir: str, cf
             "n_oligo": n_ol,
             "n_micro": n_mg,
             "micro_active_pct": microglia_activation_percent(cells, micro_active),
-            "mutant_fraction": mutant_fraction(cells),
+
+            "n_mut_opc": n_mut_opc,
+            "mutant_fraction_opc": mutant_fraction_opc(cells, opc_type=OPC),
+
+            "n_opc_in_lesion": n_opc_in_lesion,
+            "n_oligo_in_lesion": n_oligo_in_lesion,
+            "n_micro_in_lesion": n_micro_in_lesion,
+
             **lm,
+            **om,
         }
 
         if tracked_opc is not None and tracked_opc in cells and cells[tracked_opc].ctype == OPC:
@@ -167,11 +184,14 @@ def run_single(condition_name: str, sI_value: float, seed: int, out_dir: str, cf
         records.append(rec)
 
         if cfg.save_snapshots and (step % cfg.snapshot_stride == 0 or step == cfg.n_macro - 1):
+            tg = sigma_to_display_grid(sigma, cells, MEDIUM, OPC, OLIGO, MICRO, OPC_MUT)
+
             snapshots["times"].append(tmin)
             snapshots["I"].append(I_arr.copy())
             snapshots["G"].append(G_arr.copy())
             snapshots["M"].append(M.copy())
             snapshots["sigma"].append(sigma.copy())
+            snapshots["tg"].append(tg.copy())
 
     save_json(
         {
@@ -192,6 +212,7 @@ def run_single(condition_name: str, sI_value: float, seed: int, out_dir: str, cf
                 "G": np.array(snapshots["G"]),
                 "M": np.array(snapshots["M"]),
                 "sigma": np.array(snapshots["sigma"]),
+                "tg": np.array(snapshots["tg"]),
             },
         )
 
@@ -199,16 +220,31 @@ def run_single(condition_name: str, sI_value: float, seed: int, out_dir: str, cf
     summary = {
         "condition": condition_name,
         "seed": seed,
+
         "final_mean_M_lesion": final["mean_M_lesion"],
         "final_mean_I_lesion": final["mean_I_lesion"],
         "final_mean_G_lesion": final["mean_G_lesion"],
+
+        "final_mean_M_outside": final["mean_M_outside"],
+        "final_mean_I_outside": final["mean_I_outside"],
+        "final_mean_G_outside": final["mean_G_outside"],
+
         "final_lesion_area_dem": final["lesion_area_dem"],
         "final_lesion_area_repaired": final["lesion_area_repaired"],
+
         "final_n_opc": final["n_opc"],
         "final_n_oligo": final["n_oligo"],
         "final_n_micro": final["n_micro"],
-        "final_mutant_fraction": final["mutant_fraction"],
+
+        "final_n_mut_opc": final["n_mut_opc"],
+        "final_mutant_fraction_opc": final["mutant_fraction_opc"],
+
+        "final_n_opc_in_lesion": final["n_opc_in_lesion"],
+        "final_n_oligo_in_lesion": final["n_oligo_in_lesion"],
+        "final_n_micro_in_lesion": final["n_micro_in_lesion"],
+
         "peak_mean_I": max(r["mean_I"] for r in records),
+        "peak_mean_I_lesion": max(r["mean_I_lesion"] for r in records),
     }
 
     return summary

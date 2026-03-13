@@ -44,9 +44,44 @@ def lesion_metrics(M, I_arr, G_arr, lesion_mask):
     }
 
 
-def mutant_fraction(cells):
-    opc_ids = [cid for cid, c in cells.items() if c.ctype == 1]
+def mutant_fraction_opc(cells, opc_type=1):
+    """
+    Fraction of OPCs that are mutants.
+    """
+    opc_ids = [cid for cid, c in cells.items() if c.ctype == opc_type]
     if len(opc_ids) == 0:
         return 0.0
     n_mut = sum(1 for cid in opc_ids if cells[cid].genotype == 1)
     return n_mut / len(opc_ids)
+
+def count_cells_in_region(sigma, cells, region_mask, cell_type):
+    """
+    Count how many distinct cells of a given type overlap a region mask.
+    """
+    count = 0
+    for cid, cell in cells.items():
+        if cell.ctype != cell_type:
+            continue
+        if np.any(region_mask & (sigma == cid)):
+            count += 1
+    return count
+
+
+def count_mutant_opcs(cells, opc_type=1):
+    """
+    Count mutant OPC cells.
+    """
+    return sum(1 for c in cells.values() if c.ctype == opc_type and c.genotype == 1)
+
+
+def outside_lesion_metrics(M, I_arr, G_arr, lesion_mask):
+    """
+    Means outside the lesion region.
+    """
+    outside = ~lesion_mask
+
+    return {
+        "mean_M_outside": float(M[outside].mean()),
+        "mean_I_outside": float(I_arr[outside].mean()),
+        "mean_G_outside": float(G_arr[outside].mean()),
+    }
