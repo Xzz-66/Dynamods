@@ -29,9 +29,10 @@ def opc_growth_update(Vt_cell, sigma, cells, I_arr, G_arr, cfg):
             continue
         x, y = cxy
         inc = cfg.growth_coeff * (G_arr[x, y] / (0.6 + G_arr[x, y])) * (
-            1.0 / (1.0 + I_arr[x, y] / cfg.K_I_grow)
+            1.0 / (1.0 + I_arr[x, y] / cfg.current_K_I_grow)
         )
         Vt_cell[cid] = min(cfg.V_div_target, Vt_cell[cid] + inc)
+
 
 
 def split_cell_pixels(sigma, cid):
@@ -92,6 +93,20 @@ def run_single(condition_name: str, sI_value: float, seed: int, out_dir: str, cf
 
     cfg = deepcopy(cfg)
     cfg.current_sI = sI_value
+
+    if condition_name == "mild":
+        cfg.current_lesion_radius = cfg.lesion_radius_mild
+        cfg.current_alpha_q = cfg.alpha_q_mild
+        cfg.current_K_I_grow = cfg.K_I_grow_mild
+        cfg.current_Ki = cfg.Ki_mild
+    elif condition_name == "strong":
+        cfg.current_lesion_radius = cfg.lesion_radius_strong
+        cfg.current_alpha_q = cfg.alpha_q_strong
+        cfg.current_K_I_grow = cfg.K_I_grow_strong
+        cfg.current_Ki = cfg.Ki_strong
+
+  
+    
 
     run_dir = Path(out_dir) / condition_name / f"seed_{seed:03d}"
     ensure_dir(run_dir)

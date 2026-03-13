@@ -40,7 +40,7 @@ def build_maps_from_cpm(sigma, cells, micro_active, I_arr, G_arr, cfg):
         if cell.ctype == 1:
             Vmax_map[sigma == cid] = cfg.Vmax_mut if cell.genotype == 1 else cfg.Vmax_wt
 
-    denom = cfg.Km * (1.0 + I_arr / (cfg.Ki + 1e-12)) + G_arr
+    denom = cfg.Km * (1.0 + I_arr / (cfg.current_Ki + 1e-12)) + G_arr
     U_G = opc_mask.astype(float) * (Vmax_map * G_arr / (denom + 1e-12))
     U_I = cfg.eta_I_clear * opc_mask.astype(float) * I_arr
 

@@ -25,7 +25,9 @@ class Config:
     # --------------------------
     # Initialization
     # --------------------------
-    lesion_radius: int = 9
+    lesion_radius_mild: int = 9
+    lesion_radius_strong: int = 12
+    current_lesion_radius: int = 9
     lesion_center_x: int = 25
     lesion_center_y: int = 25
 
@@ -58,7 +60,9 @@ class Config:
 
     # Growth
     growth_coeff: float = 3.0
-    K_I_grow: float = 0.7
+    K_I_grow_mild: float = 1.5
+    K_I_grow_strong: float = 0.7
+    current_K_I_grow: float = 1.5
 
     # --------------------------
     # PDE parameters
@@ -78,7 +82,9 @@ class Config:
     Vmax_wt: float = 0.12
     Vmax_mut: float = 0.192
     Km: float = 0.50
-    Ki: float = 0.50
+    Ki_mild: float = 2.0
+    Ki_strong: float = 0.5
+    current_Ki: float = 2.0
 
     # --------------------------
     # GRN
@@ -88,7 +94,10 @@ class Config:
     alpha_p: float = 1.0
     gamma_p: float = 0.5
 
-    alpha_q: float = 1.2
+    alpha_q_mild: float = 0.4
+    alpha_q_strong: float = 1.2
+    current_alpha_q: float = 0.4
+
     gamma_q: float = 0.8
     K_I_q: float = 0.8
     m_I: int = 2
@@ -114,7 +123,7 @@ class Config:
     # --------------------------
     # Mutation
     # --------------------------
-    mu: float = 0.02
+    mu: float = 0.06
 
     # --------------------------
     # Output

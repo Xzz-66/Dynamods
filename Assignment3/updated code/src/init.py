@@ -22,7 +22,7 @@ def lesion_mask(cfg):
     ys = np.arange(cfg.ny)[None, :]
     return (
         (xs - cfg.lesion_center_x) ** 2 + (ys - cfg.lesion_center_y) ** 2
-        <= cfg.lesion_radius ** 2
+        <= cfg.current_lesion_radius ** 2
     )
 
 
@@ -64,8 +64,8 @@ def init_lesion_centered(cfg, seed=1):
     cid = 1
 
     lesion = lesion_mask(cfg)
-    opc_ring = ring_mask(cfg, cfg.lesion_radius + 1, cfg.lesion_radius + 8)
-    outer_ring = ring_mask(cfg, cfg.lesion_radius + 6, cfg.lesion_radius + 15)
+    opc_ring = ring_mask(cfg, cfg.current_lesion_radius + 1, cfg.current_lesion_radius + 8)
+    outer_ring = ring_mask(cfg, cfg.current_lesion_radius + 6, cfg.current_lesion_radius + 15)
 
     # myelin field
     M = np.full((cfg.nx, cfg.ny), cfg.M_init_healthy, dtype=float)

@@ -20,7 +20,7 @@ def grn_update_opcs(sigma, cells, I_arr, G_arr, cfg):
         g_local = G_arr[x, y]
         i_local = I_arr[x, y]
 
-        dq = cfg.alpha_q * H_I(i_local, cfg) - cfg.gamma_q * cell.q
+        dq = cfg.current_alpha_q * H_I(i_local, cfg) - cfg.gamma_q * cell.q
         cell.q = max(0.0, cell.q + cfg.dt_macro_min * dq)
 
         inhib = 1.0 / (1.0 + (cell.q / cfg.K_q) ** cfg.h_q)
