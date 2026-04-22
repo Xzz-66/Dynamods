@@ -1,4 +1,4 @@
-# Computational Biology Projects
+# Computational Biology Projects (Feb - March 2026)
 
 This repository contains several computational biology projects developed for coursework.  
 The projects combine mathematical modeling, simulation, and numerical analysis to study biological systems at different scales.
